@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Simple Agenda</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    
+   <script type="text/python">  
+from browser.local_storage import storage
+from browser import doc, win, html
+import datetime
+import json
+
+try:
+    storage['contactlist']
+except:
+    storage['contactlist'] = json.dumps({})
+
+def get_date():
+    date = datetime.datetime.now()
+    return date.strftime('%Y/%m/%d-%H:%M:%S')
+
+def get_form_data():
+    contact = doc["contact"].value
+    number = doc["number"].value
+    return contact, number
+                                         
+class ToDo:
+    def __init__(self):
+        self.contacts = json.loads(storage['contactlist'])
+        for key in self.contacts:
+            self.add_contact_row(key)
+    
+    def add_contact(self, ev):
+        key = get_date()
+        contact, number = get_form_data()
+        self.contacts[key] = [contact, number]
+        self._save()
+        self.add_contact_row(key)
+
+    def _del_contact(self,event):
+        # get row
+        elt = event.target
+        while elt.parent and elt.tagName != 'TR':
+            elt = elt.parent
+        key = elt.id
+        del self.contacts[key]
+        del doc[key]
+        self._save()
+        
+    def add_contact_row(self, key):
+        if self.contacts[key][1] == "High":
+            color = "danger"
+        elif self.contacts[key][1] == "Medium":
+            color = "warning"
+        else:
+            color = "success"
+        row = html.TR(Class = color)
+        row.id = key
+        self._temp_key = key
+        link = html.A(html.IMG(src = "./img/remove.png"))
+        link.href = "#"
+        link.bind('click', self._del_contact)
+        row <= html.TD(self.contacts[key][0]) + \
+               html.TD(self.contacts[key][1]) + \
+               html.TD(key) + \
+               html.TD(link)
+        doc['tablebody'] <= row
+            
+    def clear(self, ev):
+        for key in self.contacts:
+            del doc[key]
+        self.contacts = {}
+        self._save()
+
+    def _save(self):
+        storage['contactlist'] = json.dumps(self.contacts)
+
+todo = ToDo()
+add_contact = getattr(todo,'add_contact')
+clear_all = getattr(todo,'clear')
+doc["button-add"].bind("click", add_contact)
+doc["link-clear"].bind("click", clear_all)
+ 
+   </script>
+   
+  </head>
+
+  <body onload="brython()">
+
+    <div class="navbar navbar-inverse">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Simple Agenda</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="starter-template">
+        
+        <h1>Add contact</h1>
+        
+        <p class="lead"></p>
+        
+        <form class="form-horizontal" role="form">
+          <div class="form-group">
+            <label for="contact" class="col-lg-2 control-label">Contact</label>
+            <div class="col-lg-10">
+              <input id="contact" type="text" class="form-control" placeholder="Text input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="number" class="col-lg-2 control-label">Number</label>
+            <div class="col-lg-10">
+              <input id="number" type="text" class="form-control" placeholder="Text input">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-lg-offset-2 col-lg-10">
+              <button id="button-add" type="button" class="btn btn-default">Add</button>
+            </div>
+          </div>
+        </form>
+
+        <table id="mytable" class="table table-striped table-bordered table-hover table-responsive">
+          <thead class="header">
+            <tr>
+              <th class="text-center">Contact</th>
+              <th class="text-center">Number</th>
+              <th class="text-center">Created</th>
+              <th class="text-center">Done</th>
+            </tr>
+          </thead>
+          <tbody id="tablebody">
+          </tbody>
+        </table>
+        
+        <div><a id="link-clear" href="#">Clear all!</a></div>
+        
+      </div><!-- /.starter-template -->
+
+    </div><!-- /.container -->
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="./js/jquery-2.1.0.min.js"></script>
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="./js/bootstrap.min.js"></script>
+    <!-- Brython scripts
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/javascript" src="./js/brython_dist.js"></script>
+
+  </body>
+</html>
